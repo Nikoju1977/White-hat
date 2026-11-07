@@ -19,6 +19,12 @@
 
 **Limites :** les résultats ne constituent pas un audit de vulnérabilités complet. Aucun scan intrusif, exploitation, SAST réel, accès aux dépôts privés ou modification automatique des dépôts n'est réalisé. Les constats restent dans le stockage local du navigateur ; le site public n'héberge pas ces données.
 
+## AEGIS Sentinel AI — protection et supervision des terminaux
+
+**[Accéder au code source de Sentinel v0.2](sentinel/README.md)** — collecteurs Windows/macOS/Linux, serveur FastAPI, console PWA, analyse d’anomalies locale, capteurs IDS optionnels, détection d’intégrité des fichiers, traçabilité des actions et tests automatisés.
+
+**À installer séparément :** GitHub Pages héberge seulement la vitrine statique AEGIS ; il ne lance ni le serveur Python, ni les collecteurs de Sentinel. La PWA mobile est une console de supervision, pas un antivirus iOS/Android.
+
 ## Publication via GitHub Pages
 
 Le workflow `.github/workflows/deploy-pages.yml` publie automatiquement le site au push sur `main`.
