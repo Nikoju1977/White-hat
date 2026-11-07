@@ -1,6 +1,6 @@
 # AEGIS Sentinel AI — Studio Niko
 
-**Version de développement 0.1 — plateforme défensive multi-agents, données réelles uniquement**
+**Version de développement 0.2.1 — plateforme défensive multi-agents, données réelles uniquement**
 
 AEGIS Sentinel centralise la télémétrie de **Windows, macOS, Linux et serveurs**, signale des faiblesses de posture et des anomalies, et offre une console responsive installable en PWA sur PC, Mac, tablette, iPhone et Android. L'application n'annonce ni protection absolue, ni IA préentraînée universelle, ni déploiement de capteurs qu'elle n'a pas effectué.
 
@@ -22,6 +22,10 @@ AEGIS Sentinel centralise la télémétrie de **Windows, macOS, Linux et serveur
 | Conseiller LLM via Ollama local | **Oui, optionnel** | Nécessite Ollama et un modèle téléchargé (aucun modèle livré) |
 | Application web responsive/PWA | **Oui** | Consultation et administration de la console |
 | Installation PWA sur iOS / Android | **Compatible selon navigateur / HTTPS** | **Supervision de la console, pas antivirus de l'OS mobile** |
+| Contrôle d’intégrité des fichiers (FIM) | **Oui, optionnel** | SHA-256 sur des fichiers locaux explicitement autorisés, jusqu’à 8 Mio |
+| Réémission hors ligne et anti-doublons | **Oui** | File locale bornée à 96 relevés, identifiant de collecte unique et contrôle d’idempotence côté serveur |
+| Journal d’audit administratif chaîné | **Oui** | Actions de gestion journalisées et vérification locale de cohérence ; aucune résistance à un administrateur compromis |
+| Renouvellement des jetons agents | **Oui** | Invalidation immédiate de l’ancien jeton, réconfiguration manuelle du collecteur |
 | Blocage automatique des attaques ou inspection profonde du noyau | **Non** | La commande locale facultative AEGIS SHIELD peut activer le pare-feu de l’OS avec confirmation ; pas d’IPS automatique |
 | Utilisation des règles Sigma complètes | **Non** | Référence future, moteur de règles non implémenté |
 | APK/IPA natif et capteur système sur iOS/Android | **Non** | Nécessite applications natives, signatures et droits de plateforme |
@@ -90,6 +94,27 @@ AEGIS_OSQUERY_BIN=/usr/bin/osqueryi
 ```
 
 Chaque chemin est optionnel. Le collecteur lit seulement les **nouveaux** enregistrements JSON de Suricata, Falco et Wazuh, et exécute une requête SQL **fixe et en lecture seule** dans `osqueryi`. Les chemins peuvent varier suivant les systèmes ; les droits de lecture doivent être accordés explicitement. Aucune dépendance tierce n'est installée par AEGIS et aucune connexion native aux API de Wazuh n'est prétendue. Les journaux d'autres programmes sont des données non fiables.
+
+### Contrôle d’intégrité des fichiers (FIM, optionnel)
+
+Depuis le poste collecteur, configurer des chemins de fichiers absolus dans `.agent.env` :
+
+```ini
+# Sur Linux/macOS, séparer les chemins par deux-points ; sur Windows, par point-virgule
+AEGIS_FIM_PATHS=/etc/ssh/sshd_config:/etc/hosts
+```
+
+La première mesure établit une référence **sans alerte**. Une modification ultérieure produit un indice FIM, sans transmettre le contenu du fichier. Les fichiers illisibles, volumineux (plus de 8 Mio) ou non explicitement listés ne sont pas inspectés. Aucun changement de fichier n'est bloqué automatiquement.
+
+### Reprise des envois et anti-doublons
+
+En cas de réseau indisponible, le collecteur conserve jusqu'à 96 relevés dans `agent/.state.json` (permissions locales restreintes) et les renvoie en ordre au retour de la connexion. Au-delà, des mesures anciennes sont supprimées avec un avertissement ; il ne s'agit pas d'une garantie de conservation intégrale. `sample_id` permet de reconnaître un renvoi identique côté serveur. Protégez le fichier d'état : il peut contenir des signatures de journaux et des métadonnées système.
+
+### Audit et rotation des identifiants
+
+L’onglet **Journal d’audit** affiche les créations, révocations, rotations de jetons et changements de statut des incidents. Le chaînage SHA-256 indique une rupture locale mais **ne rend pas les événements immuables** : le propriétaire de la base peut réécrire toute la chaîne. Exportez les journaux vers un support de confiance indépendant si vous avez besoin de preuves résistantes à une compromission du serveur.
+
+Dans **Ajouter un appareil**, le bouton **Renouveler le jeton** invalide immédiatement l'ancien jeton du terminal. Copiez le nouveau secret dans le `.agent.env` de ce terminal et redémarrez son collecteur ; aucune clé n'est publiée sur GitHub.
 
 ### IA locale optionnelle avec Ollama
 

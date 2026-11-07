@@ -1,6 +1,6 @@
 # Politique de sécurité du prototype
 
-**AEGIS Sentinel 0.1 n'est ni certifié ni inviolable.** Son déploiement en production exige revue du code, durcissement de l'hébergement, tests d'intrusion autorisés, sauvegardes et supervision de l'infrastructure.
+**AEGIS Sentinel 0.2.1 n'est ni certifié ni inviolable.** Son déploiement en production exige revue du code, durcissement de l'hébergement, tests d'intrusion autorisés, sauvegardes et supervision de l'infrastructure.
 
 ## Configuration sûre
 
@@ -20,9 +20,9 @@ Stockage SQLite local des noms d'appareils, statistiques, ports et alertes. Hist
 
 ## Lacunes connues avant production
 
-- Pas de MFA / WebAuthn, ni RBAC, ni historique immuable des actions administratives.
+- Pas de MFA / WebAuthn ni RBAC. Chaîne d’audit locale présente, mais non immuable face à un administrateur du serveur.
 - CSRF et sessions signées, mais pas de révocation de session persistante ni de gestion de flotte multi-tenant.
-- Pas de mTLS sur le canal agent ; les jetons individuels servent de bearer tokens sur HTTPS.
+- Pas de mTLS sur le canal agent ; les jetons individuels servent de bearer tokens sur HTTPS et peuvent être renouvelés manuellement.
 - Rate limiting en mémoire du serveur, non distribué. Les collectes longues ne sont pas envoyées en streaming.
 - Pas de collecte des journaux Windows Event Log, macOS Unified Logs, ni des correctifs OS.
 - Détections explicables de première génération, pas d'EDR full-kernel, ni de protection de l'agent contre sa neutralisation.
@@ -36,3 +36,11 @@ Ne pas publier publiquement des clés, captures de journaux privés ou traces d'
 ### Docker et dossier de données (v0.2)
 
 `compose.yaml` partage `./data` avec le conteneur. Le processus n'est pas privilégié et doit utiliser l'UID/GID de l'utilisateur qui a exécuté `aegis.cli init` sur Linux. Vérifier les ACL du dossier et la confidentialité des sauvegardes ; le montage n'est pas chiffré par l'application.
+
+### Protection de la file d’attente locale
+
+`agent/.state.json` contient des relevés retenus lors des pannes réseau : chiffrement du disque, contrôle d'accès et sauvegardes adaptées sont nécessaires. Sa taille est bornée mais des relevés peuvent être perdus lorsque la file déborde.
+
+### Preuve d'intégrité de l'audit
+
+Le journal d'audit haché détecte une modification isolée et ne constitue **pas** une preuve inviolable ; un attaquant ayant pris le contrôle de la base peut le régénérer. Exporter périodiquement les empreintes hors de l'hôte pour établir un ancrage indépendant.
