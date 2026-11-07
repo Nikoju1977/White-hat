@@ -2,12 +2,15 @@ services:
   aegis-server:
     build: .
     env_file: .env
+    # Match the identity of the user who initialized ./data on the host.
+    # Set AEGIS_UID/AEGIS_GID on Linux when your UID/GID are not 1000.
+    user: "${AEGIS_UID:-1000}:${AEGIS_GID:-1000}"
     environment:
       AEGIS_DB_PATH: /app/data/aegis.db
     ports:
       - "127.0.0.1:8765:8765"
     volumes:
-      - aegis-data:/app/data
+      - ./data:/app/data:rw
     restart: unless-stopped
     read_only: true
     tmpfs:
@@ -21,5 +24,3 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-volumes:
-  aegis-data:

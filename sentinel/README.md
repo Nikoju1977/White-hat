@@ -1,6 +1,6 @@
 # AEGIS Sentinel AI — Studio Niko
 
-**Version de développement 0.2 — plateforme défensive multi-agents, données réelles uniquement**
+**Version de développement 0.1 — plateforme défensive multi-agents, données réelles uniquement**
 
 AEGIS Sentinel centralise la télémétrie de **Windows, macOS, Linux et serveurs**, signale des faiblesses de posture et des anomalies, et offre une console responsive installable en PWA sur PC, Mac, tablette, iPhone et Android. L'application n'annonce ni protection absolue, ni IA préentraînée universelle, ni déploiement de capteurs qu'elle n'a pas effectué.
 
@@ -22,11 +22,6 @@ AEGIS Sentinel centralise la télémétrie de **Windows, macOS, Linux et serveur
 | Conseiller LLM via Ollama local | **Oui, optionnel** | Nécessite Ollama et un modèle téléchargé (aucun modèle livré) |
 | Application web responsive/PWA | **Oui** | Consultation et administration de la console |
 | Installation PWA sur iOS / Android | **Compatible selon navigateur / HTTPS** | **Supervision de la console, pas antivirus de l'OS mobile** |
-| Surveillance d'intégrité de fichiers (FIM) | **Oui, opt-in** | Empreintes SHA-256 locales, fichiers plafonnés à 8 Mio ; alertes sur modification après la première mesure |
-| Reprise après coupure réseau | **Oui** | File locale bornée à 96 observations, maximum 20 envois par cycle ; avertissement en cas de débordement |
-| Protection anti-doublons | **Oui** | Identifiant unique de collecte et persistance des accusés de réception côté serveur |
-| Journal d'audit administratif chaîné par empreintes | **Oui** | Vérification locale uniquement : un administrateur de la base peut réécrire l'historique |
-| Rotation des jetons de collecteurs | **Oui** | Révocation immédiate de l'ancien jeton, mise à jour manuelle des collecteurs |
 | Blocage automatique des attaques ou inspection profonde du noyau | **Non** | La commande locale facultative AEGIS SHIELD peut activer le pare-feu de l’OS avec confirmation ; pas d’IPS automatique |
 | Utilisation des règles Sigma complètes | **Non** | Référence future, moteur de règles non implémenté |
 | APK/IPA natif et capteur système sur iOS/Android | **Non** | Nécessite applications natives, signatures et droits de plateforme |
@@ -96,25 +91,6 @@ AEGIS_OSQUERY_BIN=/usr/bin/osqueryi
 
 Chaque chemin est optionnel. Le collecteur lit seulement les **nouveaux** enregistrements JSON de Suricata, Falco et Wazuh, et exécute une requête SQL **fixe et en lecture seule** dans `osqueryi`. Les chemins peuvent varier suivant les systèmes ; les droits de lecture doivent être accordés explicitement. Aucune dépendance tierce n'est installée par AEGIS et aucune connexion native aux API de Wazuh n'est prétendue. Les journaux d'autres programmes sont des données non fiables.
 
-### Surveillance d'intégrité de fichiers (optionnelle)
-
-Sur **le collecteur local uniquement**, ajouter des chemins absolus à `.agent.env` :
-
-```ini
-# Linux/macOS : chemins séparés par « : » ; Windows par « ; »
-AEGIS_FIM_PATHS=/etc/ssh/sshd_config:/etc/hosts
-```
-
-La première lecture crée une référence sans alerte. Les modifications ultérieures de fichiers lisibles de **8 Mio maximum** émettent un signal. Cette option ne surveille ni les fichiers nouveaux non configurés, ni les répertoires récursivement, ni les fichiers inaccessibles. Les contenus ne sont jamais transmis ; seulement l'empreinte de référence reste dans le collecteur. Ne surveillez pas des fichiers fréquemment modifiés au risque d'alertes inutiles.
-
-### File de reprise hors-ligne
-
-En cas de connexion perdue, les observations sont enregistrées dans `agent/.state.json` avec permissions locales restreintes et renvoyées dans l'ordre lors de la reconnexion. Une même mesure n'est normalement pas enregistrée deux fois côté serveur grâce à son `sample_id`. Une file saturée **perd des anciennes mesures** : avertissement sur la sortie d'erreur. Les mesures retransmises correspondent à leur collecte historique, pas à une protection instantanée pendant la coupure.
-
-### Audit et rotation
-
-L'onglet **Journal d'audit** affiche les enrôlements, rotations, révocations et changements de statut d'incident. Le hachage chaîné détecte une modification isolée, mais **pas** la réécriture complète par un administrateur ayant le contrôle du serveur. Exportez des points de contrôle hors de l'hôte pour plus de garanties. Dans **Ajouter un appareil**, « Renouveler le jeton » invalide immédiatement l'ancien ; copier le nouveau dans `.agent.env` du poste concerné avant le prochain envoi.
-
 ### IA locale optionnelle avec Ollama
 
 Après installation d'Ollama et téléchargement *manuel* d'un modèle local compatible, ajouter à `.env` côté serveur (ou variable d'environnement) :
@@ -133,7 +109,15 @@ Après `python -m aegis.cli init` sur l'hôte :
 docker compose up --build -d
 ```
 
-Docker Compose publie le serveur uniquement sur `127.0.0.1:8765` du serveur Docker, et place les données SQLite dans un volume nommé. L'agent de collecte n'est **pas** inclus dans le conteneur : exécuter l'agent sur chaque système hôte. Voir `compose.yaml` et `SECURITY.md` avant toute exposition distante.
+Docker Compose publie le serveur uniquement sur `127.0.0.1:8765` du serveur Docker et monte **le même dossier `./data`** que celui créé par `python -m aegis.cli init`. L'agent local généré à l'initialisation est ainsi autorisé côté serveur conteneurisé (contrairement à une base Docker séparée).
+
+Sur Linux, lancer avec l'UID et le GID du propriétaire du dossier `data` pour permettre l'écriture à l'utilisateur non privilégié du conteneur :
+
+```bash
+AEGIS_UID="$(id -u)" AEGIS_GID="$(id -g)" docker compose up --build -d
+```
+
+Sous macOS/Windows Docker Desktop, vérifier que `./data` est partagé et accessible au conteneur. Ne lancez jamais le serveur conteneur avec des droits administrateur par défaut. Évitez de copier la base contenant les noms et preuves d'incidents sur un partage public. L'agent de collecte n'est **pas** inclus dans le conteneur : exécuter l'agent sur chaque système hôte. Voir `compose.yaml` et `SECURITY.md` avant toute exposition distante.
 
 ## Sécurité de l'architecture
 
@@ -145,7 +129,7 @@ Docker Compose publie le serveur uniquement sur `127.0.0.1:8765` du serveur Dock
 - Limitation basique des essais de connexion et de la taille des demandes déclarées ; stockage SQLite local.
 - PWA ne met **jamais** les réponses API en cache ; aucune télémétrie simulée.
 
-**Limites de durcissement :** absence de MFA, de PKI/mTLS, de rotation **automatique** des clés, de rate limit distribué, de contrôle d'intégrité des exécutables, d'audit externe, d'assurance d'intégrité des agents compromis et de chiffrement applicatif de la base SQLite. Ne pas exposer cette version directement à Internet. Utiliser HTTPS, VPN, gestion de sauvegardes et protection du serveur OS.
+**Limites de durcissement :** absence de MFA, de PKI/mTLS, de rotation automatique des clés, de rate limit distribué, de contrôle d'intégrité des exécutables, d'audit externe, d'assurance d'intégrité des agents compromis et de chiffrement applicatif de la base SQLite. Ne pas exposer cette version directement à Internet. Utiliser HTTPS, VPN, gestion de sauvegardes et protection du serveur OS.
 
 ## Tests
 

@@ -1,6 +1,6 @@
 # Politique de sécurité du prototype
 
-**AEGIS Sentinel 0.2 n'est ni certifié ni inviolable.** Son déploiement en production exige revue du code, durcissement de l'hébergement, tests d'intrusion autorisés, sauvegardes et supervision de l'infrastructure.
+**AEGIS Sentinel 0.1 n'est ni certifié ni inviolable.** Son déploiement en production exige revue du code, durcissement de l'hébergement, tests d'intrusion autorisés, sauvegardes et supervision de l'infrastructure.
 
 ## Configuration sûre
 
@@ -20,10 +20,10 @@ Stockage SQLite local des noms d'appareils, statistiques, ports et alertes. Hist
 
 ## Lacunes connues avant production
 
-- Pas de MFA / WebAuthn ni RBAC. Journal d’actions administratives **haché mais modifiable** par le propriétaire de la base.
+- Pas de MFA / WebAuthn, ni RBAC, ni historique immuable des actions administratives.
 - CSRF et sessions signées, mais pas de révocation de session persistante ni de gestion de flotte multi-tenant.
-- Pas de mTLS sur le canal agent ; les jetons individuels servent de bearer tokens sur HTTPS. Rotation manuelle possible.
-- Rate limiting en mémoire du serveur, non distribué. Les collectes ne sont pas envoyées en streaming. Le serveur limite les tailles déclarées mais un reverse proxy doit également limiter le corps HTTP réel.
+- Pas de mTLS sur le canal agent ; les jetons individuels servent de bearer tokens sur HTTPS.
+- Rate limiting en mémoire du serveur, non distribué. Les collectes longues ne sont pas envoyées en streaming.
 - Pas de collecte des journaux Windows Event Log, macOS Unified Logs, ni des correctifs OS.
 - Détections explicables de première génération, pas d'EDR full-kernel, ni de protection de l'agent contre sa neutralisation.
 - Les états de pare-feu peuvent être « Non vérifié » et ne doivent pas être interprétés comme désactivés.
@@ -33,10 +33,6 @@ Stockage SQLite local des noms d'appareils, statistiques, ports et alertes. Hist
 
 Ne pas publier publiquement des clés, captures de journaux privés ou traces d'attaque exploitables. Procéder à une revue privée du projet avec l'administrateur propriétaire avant diffusion d'un correctif.
 
-## Nouveaux contrôles de sécurité de la version 0.2
+### Docker et dossier de données (v0.2)
 
-- L’envoi de télémétrie utilise un `sample_id` aléatoire et une table de reçus pour éviter les doublons après reprise.
-- Une file locale d’envoi conserve les mesures si le réseau tombe ; chiffrez le disque local et protégez `.state.json` (les signatures d’alertes peuvent être sensibles).
-- Le FIM en option surveille des fichiers expressément choisis par l’administrateur, sans transmettre leur contenu. Son état local n’est pas inviolable.
-- Le journal d’audit haché signale certaines falsifications **mais ne résiste pas à un administrateur compromis** ou à une remise à zéro complète.
-- La rotation manuelle des jetons invalide l’ancienne identité ; aucune rotation automatique ne fonctionne en arrière-plan.
+`compose.yaml` partage `./data` avec le conteneur. Le processus n'est pas privilégié et doit utiliser l'UID/GID de l'utilisateur qui a exécuté `aegis.cli init` sur Linux. Vérifier les ACL du dossier et la confidentialité des sauvegardes ; le montage n'est pas chiffré par l'application.
