@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="fr"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#070b13"><meta name="description" content="AEGIS Sentinel AI par Studio Niko, supervision cybersécurité agentique et prédictive.">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AEGIS AI">
+<link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/static/icon-192.png">
+<link rel="stylesheet" href="/static/style.css"><title>AEGIS SENTINEL AI — Studio Niko</title>
+</head><body>
+<section id="auth" class="auth-screen">
+ <div class="auth-backdrop"></div><form id="loginForm" class="auth-card">
+  <div class="logo-mark big">⛨</div><p class="eyebrow">STUDIO NIKO / CYBER DEFENSE</p>
+  <h1>AEGIS <span>SENTINEL</span></h1><p class="muted">Console privée de supervision des systèmes</p>
+  <label for="password">Mot de passe administrateur</label><input id="password" name="password" type="password" autocomplete="current-password" minlength="12" required placeholder="Mot de passe AEGIS">
+  <button class="btn primary full" type="submit">Ouvrir la console <span>↗</span></button>
+  <p id="loginError" class="error-msg" role="alert" aria-live="polite"></p><p class="hint">Aucun compte par défaut. L'accès est créé lors de l'initialisation locale.</p>
+ </form>
+</section>
+<div id="app" class="app-shell" hidden>
+ <aside class="sidebar">
+  <div class="brand"><div class="logo-mark">⛨</div><div><b>AEGIS<span class="accent">.AI</span></b><small>STUDIO NIKO / SENTINEL</small></div></div>
+  <div class="side-label">COMMAND CENTER</div>
+  <nav class="nav" aria-label="Navigation principale">
+   <button data-tab="overview" class="nav-btn active"><span>◈</span> Vue d'ensemble</button>
+   <button data-tab="incidents" class="nav-btn"><span>⊞</span> Incidents <small id="sideIncidents">0</small></button>
+   <button data-tab="devices" class="nav-btn"><span>▣</span> Terminaux</button>
+   <button data-tab="agents" class="nav-btn"><span>✧</span> Agents intelligents</button>
+   <button data-tab="audit" class="nav-btn"><span>⛨</span> Journal d’audit</button>
+   <button data-tab="enroll" class="nav-btn"><span>⊕</span> Ajouter un appareil</button>
+   <button data-tab="guide" class="nav-btn"><span>≡</span> Mode d'emploi</button>
+  </nav>
+  <div class="sidebar-bottom"><div class="status-item"><i class="live-dot"></i><span>Serveur AEGIS en service</span></div><div class="side-caption">Analyse en lecture seule · Aucune réponse automatique destructive</div><button id="logout" class="logout">↪ Déconnexion</button></div>
+ </aside>
+ <div class="workspace">
+  <header class="topbar"><div><p class="eyebrow">INTELLIGENCE DE CYBERDÉFENSE / VERSION 0.2</p><h1 id="pageTitle">Centre de contrôle</h1></div>
+    <div class="top-actions"><span class="top-pill"><i class="live-dot"></i><span id="lastUpdate">Chargement...</span></span><button id="reload" class="btn ghost">⟳ <span class="desktop-only">Actualiser</span></button><button id="install" class="btn outline" hidden>Installer l'app</button></div></header>
+  <main>
+   <section id="tab-overview" class="tab-panel active">
+    <div class="page-intro"><div><h2>Votre périmètre de sécurité</h2><p>Observations réelles des collecteurs autorisés. Aucune simulation.</p></div><span class="tag">DONNÉES RÉELLES</span></div>
+    <div class="stat-grid">
+     <article class="stat"><div class="stat-top"><span>APPAREILS INSCRITS</span><span class="stat-icon">▣</span></div><strong id="deviceCount">—</strong><small>Terminaux avec au moins une mesure</small></article>
+     <article class="stat"><div class="stat-top"><span>AGENTS ACTIFS</span><span class="stat-icon green">◉</span></div><strong id="onlineCount">—</strong><small>Mesure reçue depuis moins de 210 secondes</small></article>
+     <article class="stat"><div class="stat-top"><span>INCIDENTS OUVERTS</span><span class="stat-icon amber">⚑</span></div><strong id="incidentCount">—</strong><small>Détections non résolues</small></article>
+     <article class="stat"><div class="stat-top"><span>ALERTES IMPORTANTES</span><span class="stat-icon red">⚠</span></div><strong id="urgentCount">—</strong><small>Gravité haute ou critique</small></article>
+    </div>
+    <div class="dashboard-grid">
+     <section class="panel risk-panel"><div class="panel-heading"><div><p class="eyebrow">ANALYSE COMPORTEMENTALE</p><h3>Évolution du risque</h3></div><select id="deviceSelect" aria-label="Appareil affiché"><option value="">Aucun appareil</option></select></div><div class="chart-wrap"><canvas id="riskChart" height="250" aria-label="Historique des scores de risque" role="img"></canvas><div id="chartEmpty" class="chart-empty">L'historique apparaîtra après les premières collectes.</div></div><div class="chart-note"><span><i class="legend-dot"></i> Score de priorité observé (0–100)</span><span id="modelStatus">Modèle : en attente</span></div></section>
+     <section class="panel posture-panel"><div class="panel-heading"><div><p class="eyebrow">SITUATION OPÉRATIONNELLE</p><h3>État du dispositif</h3></div></div><div id="postureContent" class="posture-content"><div class="empty-mini">En attente de mesures réelles.</div></div></section>
+    </div>
+    <section class="panel incident-panel"><div class="panel-heading"><div><p class="eyebrow">CENTRE DE DÉTECTION</p><h3>Alertes récentes</h3></div><button class="text-btn" data-goto="incidents">Voir tous les incidents →</button></div><div id="recentIncidents" class="incident-list"><div class="empty-mini">Aucune alerte reçue.</div></div></section>
+   </section>
+   <section id="tab-incidents" class="tab-panel"><div class="page-intro"><div><h2>Centre des incidents</h2><p>Chaque alerte correspond à une observation : vérifiez les preuves avant toute action.</p></div><select id="incidentFilter" aria-label="Filtrer les incidents"><option value="open">Ouverts</option><option value="all">Tous</option><option value="resolved">Résolus</option></select></div><div class="panel"><div id="fullIncidents" class="incident-list"><div class="empty-mini">Aucun incident enregistré.</div></div></div></section>
+   <section id="tab-devices" class="tab-panel"><div class="page-intro"><div><h2>Parc supervisé</h2><p>Windows, macOS, Linux et serveurs avec un collecteur installé.</p></div><button class="btn primary" data-goto="enroll">+ Enrôler un terminal</button></div><div id="devicesGrid" class="device-grid"></div></section>
+   <section id="tab-agents" class="tab-panel"><div class="page-intro"><div><h2>Orchestration agentique</h2><p>Cinq modules coopèrent sur les mesures collectées, sans accès à l'exécution de commandes distantes.</p></div><span class="tag">PIPELINE LOCAL</span></div>
+    <div class="agent-flow"><div class="flow-agent"><span>01 / OBSERVER</span><strong>POSTURE</strong><p>Pare-feu, Defender, ports d'écoute sensibles et espace disque.</p></div><div class="flow-connector">→</div><div class="flow-agent"><span>02 / DÉTECTER</span><strong>MENACES</strong><p>Corrélation d’alertes Suricata, Falco, Wazuh et osquery selon les intégrations configurées.</p></div><div class="flow-connector">→</div><div class="flow-agent"><span>03 / APPRENDRE</span><strong>COMPORTEMENT</strong><p>Médiane robuste puis Isolation Forest sur historique local, après apprentissage.</p></div><div class="flow-connector">→</div><div class="flow-agent"><span>04 / ANTICIPER</span><strong>PRÉDICTION</strong><p>Projection indicative de la tendance du score, non prédiction d'une attaque certaine.</p></div><div class="flow-connector">→</div><div class="flow-agent"><span>05 / SYNTHÉTISER</span><strong>COORDINATEUR</strong><p>Déduplication, score explicable, enregistrement de chaque preuve.</p></div></div>
+    <div class="panel info-panel"><h3>Conseiller IA local (optionnel)</h3><p class="muted">Connectable à un modèle téléchargé dans Ollama. Aucune exécution de commandes, aucune validation automatique d'alertes.</p><button id="requestAdvice" class="btn primary">Analyser les incidents avec Ollama</button><pre id="adviceOutput" class="advice-output" aria-live="polite">L'IA conversationnelle est désactivée tant qu'AEGIS_OLLAMA_MODEL n'est pas configuré sur le serveur.</pre></div>
+    <div class="panel info-panel"><h3>Statut du modèle</h3><p id="agentModelNote">Le statut de l'entraînement s'affichera à réception des premières mesures.</p><p class="muted">Aucun grand modèle de cybersécurité « surentraîné » n'est livré ici. L'apprentissage non supervisé fonctionne localement et se calibre sur les données de vos appareils. Il peut produire des faux positifs.</p></div>
+   </section>
+   <section id="tab-audit" class="tab-panel">
+    <div class="page-intro"><div><h2>Traçabilité administrative</h2><p>Journal haché local : détecte certaines altérations mais ne remplace pas une sauvegarde externe.</p></div></div>
+    <section class="panel"><div class="panel-heading"><h3>Intégrité de la chaîne</h3><span id="auditIntegrity">Non vérifiée</span></div><div id="auditEvents" class="list-holder"><div class="empty-mini">Ouvrez cet onglet pour charger le journal.</div></div></section>
+   </section>
+   <section id="tab-enroll" class="tab-panel"><div class="page-intro"><div><h2>Enrôler un appareil</h2><p>Un jeton unique est généré par terminal et conservé seulement sous forme de hachage côté serveur.</p></div></div>
+    <div class="enroll-grid"><section class="panel"><h3>01 — Créer les identifiants</h3><form id="enrollForm"><label for="enrollName">Nom de l'ordinateur / serveur</label><input id="enrollName" required minlength="1" maxlength="80" placeholder="Ex. PC Studio Niko"><button type="submit" class="btn primary">Générer le jeton d'enrôlement</button></form><p id="enrollError" class="error-msg" role="alert"></p><div id="enrollResult" class="secret-result" hidden><p class="warning">Important : copiez ce jeton maintenant. Il ne pourra plus être affiché.</p><label for="enrollDeviceId">Identifiant appareil</label><input id="enrollDeviceId" readonly><label for="enrollToken">Jeton secret (une seule fois)</label><textarea id="enrollToken" rows="3" readonly></textarea><button id="copyConfig" class="btn outline">Copier la configuration .agent.env</button><button id="clearSecret" class="btn ghost">Effacer le jeton de l'écran</button></div></section>
+    <section class="panel"><h3>02 — Installer le collecteur</h3><p>Sur Windows, Linux ou macOS, copiez le projet et installez Python 3.10+ puis :</p><pre>python -m pip install -r requirements.txt
+python -m agent.collector --once
+python -m agent.collector --interval 60</pre><p class="muted">Sur le second appareil, créez un fichier <code>.agent.env</code> à la racine du projet. Renseignez l'adresse HTTPS de votre serveur, son identifiant et son jeton.</p><p class="warning">Ne placez jamais les jetons dans un dépôt public. Pour un accès distant, HTTPS et contrôle d'accès réseau sont obligatoires.</p></section></div>
+    <section class="panel"><div class="panel-heading"><h3>Identifiants enregistrés</h3></div><div id="enrollmentList" class="enrollment-list"><p class="muted">Chargement...</p></div></section>
+   </section>
+   <section id="tab-guide" class="tab-panel"><div class="page-intro"><div><h2>Mode d'emploi & sécurité</h2><p>Installation, portée réelle de la protection et recommandations pour la production.</p></div></div><div class="guide-grid">
+    <section class="panel"><span class="step-num">01</span><h3>Initialiser le serveur</h3><p>Sur PC ou serveur, dans le dossier du projet :</p><pre>python -m pip install -r requirements.txt
+python -m aegis.cli init
+uvicorn aegis.main:app --host 127.0.0.1 --port 8765</pre><p>Ouvrez <code>http://127.0.0.1:8765</code> et connectez-vous.</p></section>
+    <section class="panel"><span class="step-num">02</span><h3>Activer la collecte</h3><p>Le fichier local <code>.agent.env</code> est créé à l'initialisation. Dans un second terminal :</p><pre>python -m agent.collector --once
+python -m agent.collector --interval 60</pre><p>Les relevés réels apparaissent après la première collecte réussie.</p></section>
+    <section class="panel"><span class="step-num">03</span><h3>Connecter les outils open source</h3><p>Installez séparément les logiciels officiels. Configurez les chemins de logs : <code>AEGIS_SURICATA_EVE_PATH</code>, <code>AEGIS_FALCO_JSON_PATH</code>, <code>AEGIS_WAZUH_ALERTS_JSON_PATH</code>, ou le binaire <code>AEGIS_OSQUERY_BIN</code>.</p><p>Les outils tiers ne sont pas inclus et ne sont pas installés automatiquement.</p></section>
+    <section class="panel"><span class="step-num">04</span><h3>iPhone, iPad, Android</h3><p>Accédez au tableau de bord par HTTPS, puis ajoutez-le à l'écran d'accueil. Cette PWA supervise les appareils déjà enrôlés mais ne peut pas inspecter ni bloquer l'ensemble des processus d'iOS ou Android.</p></section>
+    <section class="panel"><span class="step-num">05</span><h3>Sécurité des accès distants</h3><p>Conservez le serveur en écoute locale et utilisez un proxy HTTPS sécurisé, un VPN d'administration et une authentification forte du réseau. N'exposez jamais le service brut sur Internet.</p></section>
+    <section class="panel"><span class="step-num">06</span><h3>Comprendre les prédictions</h3><p>Le score de risque est un indicateur opérationnel (0–100), pas une probabilité d'intrusion. La projection n'est calculée qu'après cinq mesures ; le modèle local d'anomalies utilise trente mesures ou plus et peut être trompé.</p></section>
+   </div></section>
+  </main><footer class="footer"><span>AEGIS SENTINEL AI · STUDIO NIKO · 0.1</span><span>Mesures réelles uniquement · Défense non intrusive · <span id="footerTime">—</span></span></footer>
+ </div>
+</div>
+<script src="/static/app.js" defer></script>
+</body></html>
